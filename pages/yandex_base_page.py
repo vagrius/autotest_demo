@@ -1,6 +1,9 @@
 from selenium.common.exceptions import NoSuchElementException
-from .locators import YandexBasePageLocators
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from .locators import YandexBasePageLocators
 import time
 
 
@@ -18,6 +21,13 @@ class YandexBasePage:
         try:
             self.browser.find_element(how, what)
         except NoSuchElementException:
+            return False
+        return True
+
+    def is_page_opened(self, how, what, timeout=4):
+        try:
+            WebDriverWait(self.browser, timeout).until(EC.presence_of_element_located((how, what)))
+        except TimeoutException:
             return False
         return True
 
@@ -62,7 +72,7 @@ class YandexBasePage:
         link = self.browser.find_element(*YandexBasePageLocators.FIRST_CATEGORY_LINK)
         text = self.browser.find_element(*YandexBasePageLocators.FIRST_CATEGORY_SEARCH_TEXT).text
         link.click()
-        self.browser.implicitly_wait(5)
+        self.browser.implicitly_wait(3)
         return text
 
     def is_search_text_correct(self, text):
@@ -71,12 +81,25 @@ class YandexBasePage:
 
     def go_to_first_image_page(self):
         link = self.browser.find_element(*YandexBasePageLocators.FIRST_IMAGE_LINK)
-        description = self.browser.find_element(*YandexBasePageLocators.FIRST_IMAGE_DESCRIPTION).get_attribute('alt')
+        self.browser.find_element(*YandexBasePageLocators.FIRST_IMAGE_DESCRIPTION).get_attribute('alt')
         link.click()
-        self.browser.implicitly_wait(5)
-        return description
+        self.browser.implicitly_wait(3)
 
-    def is_search_image_page_opened(self, description):
+    def is_search_image_page_opened(self):
+        assert self.is_page_opened(*YandexBasePageLocators.IMAGE_VIEWER), "Image has not be opened"
+
+    def is_image_changing_when_press_arrow_right(self):
+        initial_image = self.browser.find_element(*YandexBasePageLocators.IMAGE_SELECTED).get_attribute('style')
+        container = self.browser.find_element(*YandexBasePageLocators.IMAGE_CONTAINER)
+        container.send_keys(Keys.ARROW_RIGHT)
         time.sleep(3)
-        assert self.browser.find_element(*YandexBasePageLocators.FIRST_IMAGE_DESCRIPTION_ON_ITS_PAGE).text == \
-               description, "Wrong page opened"
+        assert self.browser.find_element(*YandexBasePageLocators.IMAGE_SELECTED).get_attribute('style') != \
+               initial_image, "Image has not change"
+        return initial_image
+
+    def is_image_changing_when_press_arrow_left(self, initial_image):
+        container = self.browser.find_element(*YandexBasePageLocators.IMAGE_CONTAINER)
+        container.send_keys(Keys.ARROW_LEFT)
+        time.sleep(3)
+        assert self.browser.find_element(*YandexBasePageLocators.IMAGE_SELECTED).get_attribute('style') == \
+               initial_image, "Image has not change or this is not initial image"

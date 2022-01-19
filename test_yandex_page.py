@@ -29,7 +29,7 @@ class TestYandexPictures:
         page.go_to_images_page()
         page.is_images_page_opened()  # проверяем, что перешли на https://yandex.ru/images/
 
-    def test_yandex_pictures_page(self, browser):
+    def test_yandex_images_page(self, browser):
         page = YandexImagesPage(browser, YANDEX_IMAGES_PAGE_LINK)
         page.open()
         search_text = page.go_to_first_images_category_page()  # переходим на страницу категории и получаем ее текст
@@ -37,5 +37,8 @@ class TestYandexPictures:
         # отображается, поэтому в качестве обходного решения проверяем по заголовку; это же проверка того, что открыли
         # нужную страницу
         page.is_search_text_correct(search_text)
-        description = page.go_to_first_image_page()  # переходим на страницу первой картинки
-        page.is_search_image_page_opened(description)  # проверяем, что страница открылась
+        page.go_to_first_image_page()  # переходим на страницу первой картинки
+        page.is_search_image_page_opened()  # проверяем, что картинка открылась
+        image = page.is_image_changing_when_press_arrow_right()  # проверяем, что картинка поменялась при нажатии ->
+        page.is_image_changing_when_press_arrow_left(image)  # проверяем, что картинка поменялась при нажатии <-,
+        # и это первоначальная картинка
